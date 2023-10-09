@@ -3,25 +3,25 @@ graph1.UI();
 class Graph
 {
     internal Dictionary<string, List<(string, double)>> AdjacencyList = new();
-    internal bool wheighted;
-    internal bool oriented;
-    public Graph(Dictionary<string, List<(string, double)>> vertices, bool wheighted, bool oriented)
+    internal bool wh;
+    internal bool orn;
+    public Graph(Dictionary<string, List<(string, double)>> vertices, bool wh, bool orn)
     {
         this.AdjacencyList = vertices;
-        this.wheighted = wheighted;
-        this.oriented = oriented;
+        this.wh = wh;
+        this.orn = orn;
     }
     public Graph(Graph graph)
     {
         this.AdjacencyList = graph.AdjacencyList;
-        this.oriented = graph.oriented;
-        this.wheighted = graph.wheighted;
+        this.orn = graph.orn;
+        this.wh = graph.wh;
     }
     public Graph()
     {
         AdjacencyList = new Dictionary<string, List<(string, double)>>();
-        wheighted = false;
-        oriented = false;
+        wh = false;
+        orn = false;
     }
     public Graph(string path)
     {
@@ -33,8 +33,8 @@ class Graph
             for (int j = 0; j < AdjacencyMatrix.Length; j++)
             {
                 if (AdjacencyMatrix[i][j] > 0) AdjacencyList[((($"{i + 1}")))].Add(((($"{j + 1}")), (AdjacencyMatrix[i][j]))); ;
-                if (!wheighted && (AdjacencyMatrix[i][j] != 1 || AdjacencyMatrix[i][j] != -1)) wheighted = true;
-                if (!oriented && AdjacencyMatrix[i][j] < 0) oriented = true;
+                if (!wh && (AdjacencyMatrix[i][j] != 1 || AdjacencyMatrix[i][j] != -1)) wh = true;
+                if (!orn && AdjacencyMatrix[i][j] < 0) orn = true;
             }
         }
     }
@@ -44,7 +44,7 @@ class Graph
     }
     private void RemoveVertex(string vertex)
     {
-        if (wheighted)
+        if (wh)
         {
             foreach (var vertices in AdjacencyList.Values)
             {
@@ -66,7 +66,7 @@ class Graph
             if (vertex1 == vertex2) AdjacencyList[vertex1].Add((vertex1, weight));
             else
             {
-                if (oriented) AdjacencyList[vertex1].Add((vertex2, weight));
+                if (orn) AdjacencyList[vertex1].Add((vertex2, weight));
                 else
                 {
                     AdjacencyList[vertex1].Add((vertex2, weight));
@@ -82,22 +82,21 @@ class Graph
     }
     private void CreateAdjacencyList() { }
     private double[][] CreateAdjacencyMatrix()
-    {       //запись -1 при выходе вершины в орграфе
+    {
         List<string> vertexList = AdjacencyList.Keys.ToList();
         double[][] matrix = new double[AdjacencyList.Keys.Count][];
         foreach (string v in vertexList) matrix[vertexList.IndexOf(v)] = new double[AdjacencyList.Keys.Count];
-        //if (oriented){
+       
         foreach (string v in vertexList)
         {
             matrix[vertexList.IndexOf(v)] = new double[AdjacencyList.Keys.Count];
-            foreach (var adjVert in AdjacencyList[v])   // оптимизтровать для неорг графа(симметрия)
+            foreach (var adjVert in AdjacencyList[v])   
             {
                 matrix[vertexList.IndexOf(v)][vertexList.IndexOf(adjVert.Item1)] = adjVert.Item2;
-                if (oriented) matrix[vertexList.IndexOf(adjVert.Item1)][vertexList.IndexOf(v)] = -adjVert.Item2;
+                if (orn) matrix[vertexList.IndexOf(adjVert.Item1)][vertexList.IndexOf(v)] = -adjVert.Item2;
             }
         }
-        //}else{
-        //}
+        
         return matrix;
     }
     public void PrintAdjacencyMatrix(double[][] matrix)
@@ -167,7 +166,7 @@ class Graph
                     else Console.WriteLine("вершина уже существует");
                     break;
                 case "2":
-                    if (wheighted)
+                    if (wh)
                     {
                         Console.WriteLine("введите вершины, между которыми создается ребро и вес ребра(v1 v2 wheight)");
                         idList = Console.ReadLine().Split(" ").ToList();
@@ -195,8 +194,8 @@ class Graph
                     PrintAdjacencyList();
                     break;
                 case "6"://граф в файл
-                    Console.WriteLine("введите путь до файла:");//првоерка на существоание файла?
-                    WriteAdjacencyListToFile(Console.ReadLine());               //создание файла если он не существует?
+                    Console.WriteLine("введите путь до файла:");
+                    WriteAdjacencyListToFile(Console.ReadLine());               
                     break;
                 case "7":
                     return;
