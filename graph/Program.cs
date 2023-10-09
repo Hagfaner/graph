@@ -1,4 +1,6 @@
 ﻿Graph graph1 = new Graph("D:/1.txt");
+Graph graph2 = new Graph(graph1);
+graph2.UI();
 graph1.UI();
 class Graph
 {
@@ -13,9 +15,10 @@ class Graph
     }
     public Graph(Graph graph)
     {
-        this.AdjacencyList = graph.AdjacencyList;
-        this.orn = graph.orn;
-        this.wh = graph.wh;
+        AdjacencyList = new Dictionary<string, List<(string, double)>>(graph.AdjacencyList);
+        foreach(var item in AdjacencyList.Keys) AdjacencyList[item] = new List<(string, double)>(graph.AdjacencyList[item]);
+        wh = graph.wh;
+        orn = graph.orn;
     }
     public Graph()
     {
