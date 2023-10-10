@@ -1,7 +1,18 @@
-﻿Graph graph1 = new Graph("D:/1.txt");
-Graph graph2 = new Graph(graph1);
-graph2.UI();
-graph1.UI();
+﻿using System;
+
+Console.WriteLine("1.Создать пустой граф\n" +
+                          "2.Создать граф из файла");
+switch (Console.ReadLine())
+{
+    case "1":
+        Graph graph = new Graph(); UI ui = new UI(graph); break;
+    case "2":
+        Console.WriteLine("Укажите путь к файлу:");
+        Graph graph1 = new Graph(Console.ReadLine()); UI ui1 = new UI(graph1); break;
+    default:
+        break;
+}
+
 class Graph
 {
     internal Dictionary<string, List<(string, double)>> AdjacencyList = new();
@@ -23,29 +34,55 @@ class Graph
     public Graph()
     {
         AdjacencyList = new Dictionary<string, List<(string, double)>>();
-        wh = false;
-        orn = false;
+        Console.WriteLine("Граф взвешенный? y/n");
+        if (Console.ReadLine() == "y") wh = true;
+        else wh = false;
+        Console.WriteLine("Граф ориентированный y/n");
+        if (Console.ReadLine() == "y") orn = true;
+        else orn = false;
     }
     public Graph(string path)
     {
-        double[][] AdjacencyMatrix = File.ReadAllLines(path).Select(str => str.Split(",").Select(c => Convert.ToDouble(c)).ToArray()).ToArray();
-        for (int i = 0; i < AdjacencyMatrix.Length; i++)
-            AddVertex((($"{i + 1}")));
-        for (int i = 0; i < AdjacencyMatrix.Length; i++)
+        string[] adjlist= {""};
+        try
         {
-            for (int j = 0; j < AdjacencyMatrix.Length; j++)
-            {
-                if (AdjacencyMatrix[i][j] > 0) AdjacencyList[((($"{i + 1}")))].Add(((($"{j + 1}")), (AdjacencyMatrix[i][j]))); ;
-                if (!wh && (AdjacencyMatrix[i][j] != 1 || AdjacencyMatrix[i][j] != -1)) wh = true;
-                if (!orn && AdjacencyMatrix[i][j] < 0) orn = true;
-            }
+           adjlist = File.ReadAllLines(path);
         }
+        catch (Exception)
+        {
+            Console.WriteLine("Выбран не правильный путь или неправильная запись графа в файле");
+            
+        }
+        wh = Convert.ToBoolean(adjlist[0].Split(":")[1]);
+        orn = Convert.ToBoolean(adjlist[1].Split(":")[1]);
+        for (int i = 2; i < adjlist.Length; i++)
+        {
+            List<(string, double)> buf1 = new List<(string, double)>();
+            foreach(var item in adjlist[i].Split(" : ")[1].Split(" "))
+            {
+                (string, double) buf2 = (item, 1);
+                buf1.Add(buf2);
+                            }
+            AdjacencyList.Add(adjlist[i].Split(" : ")[0], buf1);
+        }
+        //double[][] AdjacencyMatrix = File.ReadAllLines(path).Select(str => str.Split(",").Select(c => Convert.ToDouble(c)).ToArray()).ToArray();
+        //for (int i = 0; i < AdjacencyMatrix.Length; i++)
+        //    AddVertex((($"{i + 1}")));
+        //for (int i = 0; i < AdjacencyMatrix.Length; i++)
+        //{
+        //    for (int j = 0; j < AdjacencyMatrix.Length; j++)
+        //    {
+        //        if (AdjacencyMatrix[i][j] > 0) AdjacencyList[((($"{i + 1}")))].Add(((($"{j + 1}")), (AdjacencyMatrix[i][j]))); ;
+        //        if (!wh && (AdjacencyMatrix[i][j] != 1 || AdjacencyMatrix[i][j] != -1)) wh = true;
+        //        if (!orn && AdjacencyMatrix[i][j] < 0) orn = true;
+        //    }
+        //}
     }
-    private void AddVertex(string vertex)
+    public void AddVertex(string vertex)
     {
         AdjacencyList.Add(vertex, new List<(string, double)>());
     }
-    private void RemoveVertex(string vertex)
+    public void RemoveVertex(string vertex)
     {
         if (wh)
         {
@@ -62,7 +99,7 @@ class Graph
             foreach (var vertices in AdjacencyList.Values) vertices.Remove((vertex, 1));
         AdjacencyList.Remove(vertex);
     }
-    private void AddEdge(string vertex1, string vertex2, double weight = 1)
+    public void AddEdge(string vertex1, string vertex2, double weight = 1)
     {
         if (!(AdjacencyList[vertex1].Contains((vertex2, weight)) && (AdjacencyList[vertex2].Contains((vertex1, weight)))))
         {
@@ -78,13 +115,13 @@ class Graph
             }
         }
     }
-    private void RemoveEdge(string vertex1, string vertex2)
+    public void RemoveEdge(string vertex1, string vertex2)
     {
         AdjacencyList[vertex1].Remove(AdjacencyList[vertex1].First(x => x.Item1 == vertex2));
         AdjacencyList[vertex2].Remove(AdjacencyList[vertex2].First(x => x.Item1 == vertex1));
     }
     private void CreateAdjacencyList() { }
-    private double[][] CreateAdjacencyMatrix()
+    public double[][] CreateAdjacencyMatrix()
     {
         List<string> vertexList = AdjacencyList.Keys.ToList();
         double[][] matrix = new double[AdjacencyList.Keys.Count][];
@@ -125,15 +162,18 @@ class Graph
     }
     public void WriteAdjacencyListToFile(string path)
     {
-        string res = " ";
+        string res = "";
+        res += "Wh:" + wh.ToString() + "\n";
+        res += "Orn:" + orn.ToString() + "\n";
         for (int i = 0; i < AdjacencyList.Count; i++)
         {
             res += ($"{AdjacencyList.ElementAt(i).Key} : ");
-            res += (String.Join("  ", (AdjacencyList[AdjacencyList.ElementAt(i).Key].Select(x => x.Item1).ToList())) + "\n");
+            if(wh) res += ("(" + String.Join(" ",(AdjacencyList[AdjacencyList.ElementAt(i).Key].Select(x => x.Item1).ToList())) + " " + String.Join(" ", (AdjacencyList[AdjacencyList.ElementAt(i).Key].Select(x => x.Item2).ToList()))+")"  + "\n");
+            else res += (String.Join(" ", (AdjacencyList[AdjacencyList.ElementAt(i).Key].Select(x => x.Item1).ToList())) + "\n");
         }
         File.WriteAllText(path, res);
     }
-    private bool IsVertexExists(string id)
+    public bool IsVertexExists(string id)
     {
         bool check = false; ;
         foreach (var v in AdjacencyList)
@@ -144,61 +184,63 @@ class Graph
         return check;
 
     }
-    public void UI()
-    {
-        Console.WriteLine(
-            "1. Добавить вершину\n" +
+}
+class UI{
+    public UI(Graph graph){
+        
+        while (true)
+        {
+            Console.WriteLine(
+            "\n1. Добавить вершину\n" +
             "2. Добавить ребро\n" +
             "3. Удалить вершину\n" +
             "4. Удалить ребро\n" +
             "5. Вывести список смежности\n" +
             "6. Сохранить список смежности в файл\n" +
             "7. Выход");
-        string id;
-        List<string> idList = new();
+            string id;
+            List<string> idList = new();
 
-        while (true)
-        {
             Console.WriteLine("выберете номер операции:");
             switch (Console.ReadLine())
             {
                 case "1":
                     Console.WriteLine("введите название новой вершины");
                     id = Console.ReadLine();
-                    if (!IsVertexExists(id)) AddVertex((id));
+                    if (!graph.IsVertexExists(id)) graph.AddVertex((id));
                     else Console.WriteLine("вершина уже существует");
                     break;
                 case "2":
-                    if (wh)
+                    if (graph.wh)
                     {
                         Console.WriteLine("введите вершины, между которыми создается ребро и вес ребра(v1 v2 wheight)");
                         idList = Console.ReadLine().Split(" ").ToList();
-                        AddEdge((idList[0]), (idList[1]), Convert.ToDouble(idList[2]));
+                        graph.AddEdge((idList[0]), (idList[1]), Convert.ToDouble(idList[2]));
                     }
                     else
                     {
                         Console.WriteLine("введите вершины, между которыми создается ребро(v1 v2)");// вес ребра
                         idList = Console.ReadLine().Split(" ").ToList();
-                        AddEdge((idList[0]), (idList[1]));
+                        graph.AddEdge((idList[0]), (idList[1]));
                     }
                     break;
                 case "3":
                     Console.WriteLine("введите название удаляемой вершины");
                     id = Console.ReadLine();
-                    if (IsVertexExists(id)) RemoveVertex((id));
+                    if (graph.IsVertexExists(id)) graph.RemoveVertex((id));
                     else Console.WriteLine("вершины не существует");
                     break;
                 case "4":
                     Console.WriteLine("введите вершины, между которыми удаляется ребро(v1 v2)");
                     idList = Console.ReadLine().Split(" ").ToList();
-                    RemoveEdge((idList[0]), (idList[1]));
+                    graph.RemoveEdge((idList[0]), (idList[1]));
                     break;
                 case "5":
-                    PrintAdjacencyList();
+                    graph.PrintAdjacencyList();
                     break;
                 case "6"://граф в файл
                     Console.WriteLine("введите путь до файла:");
-                    WriteAdjacencyListToFile(Console.ReadLine());               
+                    graph.WriteAdjacencyListToFile(Console.ReadLine());
                     break;
                 case "7":
                     return;
@@ -206,6 +248,6 @@ class Graph
                     Console.WriteLine("Выбрана несущесвующая операция");
                     break;
             }
-        }
+        } 
     }
 }
