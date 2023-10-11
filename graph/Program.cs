@@ -60,9 +60,11 @@ class Graph
             List<(string, double)> buf1 = new List<(string, double)>();
             foreach(var item in adjlist[i].Split(" : ")[1].Split(" "))
             {
-                (string, double) buf2 = (item, 1);
+                (string, double) buf2;
+                if (wh) buf2 = (item.Split("-")[0], Convert.ToDouble(item.Split("-")[1]));
+                else buf2 = (item, 1);
                 buf1.Add(buf2);
-                            }
+            }
             AdjacencyList.Add(adjlist[i].Split(" : ")[0], buf1);
         }
         //double[][] AdjacencyMatrix = File.ReadAllLines(path).Select(str => str.Split(",").Select(c => Convert.ToDouble(c)).ToArray()).ToArray();
@@ -167,9 +169,13 @@ class Graph
         res += "Orn:" + orn.ToString() + "\n";
         for (int i = 0; i < AdjacencyList.Count; i++)
         {
-            res += ($"{AdjacencyList.ElementAt(i).Key} : ");
-            if(wh) res += ("(" + String.Join(" ",(AdjacencyList[AdjacencyList.ElementAt(i).Key].Select(x => x.Item1).ToList())) + " " + String.Join(" ", (AdjacencyList[AdjacencyList.ElementAt(i).Key].Select(x => x.Item2).ToList()))+")"  + "\n");
-            else res += (String.Join(" ", (AdjacencyList[AdjacencyList.ElementAt(i).Key].Select(x => x.Item1).ToList())) + "\n");
+            res += ($"{AdjacencyList.ElementAt(i).Key} :");
+            foreach(var item in AdjacencyList[AdjacencyList.ElementAt(i).Key])
+            {
+                if (wh) res += " "+item.Item1 + "-" + item.Item2;
+                else res += " "+item.Item1;
+            }
+            res += "\n";
         }
         File.WriteAllText(path, res);
     }
