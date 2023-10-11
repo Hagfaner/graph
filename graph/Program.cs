@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 Console.WriteLine("1.Создать пустой граф\n" +
                           "2.Создать граф из файла");
@@ -8,11 +8,14 @@ switch (Console.ReadLine())
         Graph graph = new Graph(); UI ui = new UI(graph); break;
     case "2":
         Console.WriteLine("Укажите путь к файлу:");
-        Graph graph1 = new Graph(Console.ReadLine()); UI ui1 = new UI(graph1); break;
+        graph = new Graph(Console.ReadLine()); UI ui1 = new UI(graph); break;
     default:
         break;
 }
-
+Graph graph2 = new Graph(Console.ReadLine());
+Graph graph3 = new Graph(Console.ReadLine());
+Graph graph4 = Graph.IntersectionGraph(graph2, graph3);
+graph4.PrintAdjacencyList();
 class Graph
 {
     internal Dictionary<string, List<(string, double)>> AdjacencyList = new();
@@ -27,7 +30,7 @@ class Graph
     public Graph(Graph graph)
     {
         AdjacencyList = new Dictionary<string, List<(string, double)>>(graph.AdjacencyList);
-        foreach(var item in AdjacencyList.Keys) AdjacencyList[item] = new List<(string, double)>(graph.AdjacencyList[item]);
+        foreach (var item in AdjacencyList.Keys) AdjacencyList[item] = new List<(string, double)>(graph.AdjacencyList[item]);
         wh = graph.wh;
         orn = graph.orn;
     }
@@ -43,22 +46,22 @@ class Graph
     }
     public Graph(string path)
     {
-        string[] adjlist= {""};
+        string[] adjlist = { "" };
         try
         {
-           adjlist = File.ReadAllLines(path);
+            adjlist = File.ReadAllLines(path);
         }
         catch (Exception)
         {
             Console.WriteLine("Выбран не правильный путь или неправильная запись графа в файле");
-            
+
         }
         wh = Convert.ToBoolean(adjlist[0].Split(":")[1]);
         orn = Convert.ToBoolean(adjlist[1].Split(":")[1]);
         for (int i = 2; i < adjlist.Length; i++)
         {
             List<(string, double)> buf1 = new List<(string, double)>();
-            foreach(var item in adjlist[i].Split(" : ")[1].Split(" "))
+            foreach (var item in adjlist[i].Split(" : ")[1].Split(" "))
             {
                 (string, double) buf2;
                 if (wh) buf2 = (item.Split("-")[0], Convert.ToDouble(item.Split("-")[1]));
@@ -67,18 +70,77 @@ class Graph
             }
             AdjacencyList.Add(adjlist[i].Split(" : ")[0], buf1);
         }
-        //double[][] AdjacencyMatrix = File.ReadAllLines(path).Select(str => str.Split(",").Select(c => Convert.ToDouble(c)).ToArray()).ToArray();
-        //for (int i = 0; i < AdjacencyMatrix.Length; i++)
-        //    AddVertex((($"{i + 1}")));
-        //for (int i = 0; i < AdjacencyMatrix.Length; i++)
-        //{
-        //    for (int j = 0; j < AdjacencyMatrix.Length; j++)
-        //    {
-        //        if (AdjacencyMatrix[i][j] > 0) AdjacencyList[((($"{i + 1}")))].Add(((($"{j + 1}")), (AdjacencyMatrix[i][j]))); ;
-        //        if (!wh && (AdjacencyMatrix[i][j] != 1 || AdjacencyMatrix[i][j] != -1)) wh = true;
-        //        if (!orn && AdjacencyMatrix[i][j] < 0) orn = true;
-        //    }
-        //}
+     
+    }
+    public static Graph CompleteGraph(Graph graph)
+    {
+        Dictionary<string, List<(string, double)>> AdjList = new();
+        foreach (var vertexK in graph.AdjacencyList.Keys)
+        {
+            AdjList.Add(vertexK, new List<(string, double)>());
+            foreach (var VertexV in graph.AdjacencyList.Keys)
+            {
+                if (vertexK != VertexV) AdjList[vertexK].Add((VertexV, 1));
+            }
+        }
+        return new Graph(AdjList, graph.wh, graph.orn);
+    }
+    public static Graph ComplementGraph(Graph graph)
+    {
+        Dictionary<string, List<(string, double)>> AdjList = new();
+        foreach (var vertexK in graph.AdjacencyList.Keys)
+        {
+            AdjList.Add(vertexK, new List<(string, double)>());
+            foreach (var VertexV in graph.AdjacencyList.Keys)
+            {
+                if (!graph.AdjacencyList[vertexK].Any(x => x.Item1 == VertexV) && VertexV != vertexK) AdjList[vertexK].Add((VertexV, 1));
+            }
+        }
+        return new Graph(AdjList, graph.wh, graph.orn);
+    }
+    public static Graph Union_graph(Graph gr1,Graph gr2)
+    {
+        Dictionary<string, List<(string, double)>> AdjacencyList = new();
+        if (gr1.wh == gr2.wh && gr1.orn == gr2.orn)
+        {
+           
+            if (!gr1.AdjacencyList.Keys.Intersect(gr2.AdjacencyList.Keys).Any())
+            {
+                foreach (var item in gr1.AdjacencyList.Keys)
+                {
+                    AdjacencyList.Add(item, gr1.AdjacencyList[item]);
+                }
+                foreach (var item in gr2.AdjacencyList.Keys)
+                {
+                    AdjacencyList.Add(item, gr2.AdjacencyList[item]);
+                }
+                return new Graph(AdjacencyList, gr1.wh, gr1.orn);
+            }
+        }
+        return null;
+    }
+    public static Graph IntersectionGraph(Graph graph1, Graph graph2)
+    {
+        Dictionary<string, List<(string, double)>> AdjList = new();
+        if (graph1.AdjacencyList.Keys.Intersect(graph2.AdjacencyList.Keys).Any())
+            return null;
+        foreach (var item in graph1.AdjacencyList)
+        {
+            AdjList.Add(item.Key, item.Value);
+        }
+        foreach (var item in graph2.AdjacencyList)
+        {
+            AdjList.Add(item.Key, item.Value);
+        }
+        Graph gr = new Graph(AdjList, false, false);
+        foreach (var item1 in graph1.AdjacencyList)
+        {
+            foreach (var item2 in graph2.AdjacencyList)
+            {
+                gr.AddEdge(item1.Key, item2.Key);
+            }
+        }
+        return gr;
     }
     public void AddVertex(string vertex)
     {
@@ -128,17 +190,17 @@ class Graph
         List<string> vertexList = AdjacencyList.Keys.ToList();
         double[][] matrix = new double[AdjacencyList.Keys.Count][];
         foreach (string v in vertexList) matrix[vertexList.IndexOf(v)] = new double[AdjacencyList.Keys.Count];
-       
+
         foreach (string v in vertexList)
         {
             matrix[vertexList.IndexOf(v)] = new double[AdjacencyList.Keys.Count];
-            foreach (var adjVert in AdjacencyList[v])   
+            foreach (var adjVert in AdjacencyList[v])
             {
                 matrix[vertexList.IndexOf(v)][vertexList.IndexOf(adjVert.Item1)] = adjVert.Item2;
                 if (orn) matrix[vertexList.IndexOf(adjVert.Item1)][vertexList.IndexOf(v)] = -adjVert.Item2;
             }
         }
-        
+
         return matrix;
     }
     public void PrintAdjacencyMatrix(double[][] matrix)
@@ -170,10 +232,10 @@ class Graph
         for (int i = 0; i < AdjacencyList.Count; i++)
         {
             res += ($"{AdjacencyList.ElementAt(i).Key} :");
-            foreach(var item in AdjacencyList[AdjacencyList.ElementAt(i).Key])
+            foreach (var item in AdjacencyList[AdjacencyList.ElementAt(i).Key])
             {
-                if (wh) res += " "+item.Item1 + "-" + item.Item2;
-                else res += " "+item.Item1;
+                if (wh) res += " " + item.Item1 + "-" + item.Item2;
+                else res += " " + item.Item1;
             }
             res += "\n";
         }
@@ -191,9 +253,11 @@ class Graph
 
     }
 }
-class UI{
-    public UI(Graph graph){
-        
+class UI
+{
+    public UI(Graph graph)
+    {
+
         while (true)
         {
             Console.WriteLine(
@@ -254,6 +318,6 @@ class UI{
                     Console.WriteLine("Выбрана несущесвующая операция");
                     break;
             }
-        } 
+        }
     }
 }
