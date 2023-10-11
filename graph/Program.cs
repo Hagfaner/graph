@@ -47,30 +47,38 @@ class Graph
     public Graph(string path)
     {
         string[] adjlist = { "" };
-        try
+        while (true)
         {
-            adjlist = File.ReadAllLines(path);
-        }
-        catch (Exception)
-        {
-            Console.WriteLine("Выбран не правильный путь или неправильная запись графа в файле");
-
-        }
-        wh = Convert.ToBoolean(adjlist[0].Split(":")[1]);
-        orn = Convert.ToBoolean(adjlist[1].Split(":")[1]);
-        for (int i = 2; i < adjlist.Length; i++)
-        {
-            List<(string, double)> buf1 = new List<(string, double)>();
-            foreach (var item in adjlist[i].Split(" : ")[1].Split(" "))
+            if (!File.Exists(path)) adjlist = File.ReadAllLines(path);
+            else
             {
-                (string, double) buf2;
-                if (wh) buf2 = (item.Split("-")[0], Convert.ToDouble(item.Split("-")[1]));
-                else buf2 = (item, 1);
-                buf1.Add(buf2);
+                Console.WriteLine("Неверный путь файла");
+                Console.WriteLine("Введите путь заново");
+                path = Console.ReadLine();
             }
-            AdjacencyList.Add(adjlist[i].Split(" : ")[0], buf1);
         }
-     
+            try
+            {
+                wh = Convert.ToBoolean(adjlist[0].Split(":")[1]);
+                orn = Convert.ToBoolean(adjlist[1].Split(":")[1]);
+                for (int i = 2; i < adjlist.Length; i++)
+                {
+                    List<(string, double)> buf1 = new List<(string, double)>();
+                    foreach (var item in adjlist[i].Split(" : ")[1].Split(" "))
+                    {
+                        (string, double) buf2;
+                        if (wh) buf2 = (item.Split("-")[0], Convert.ToDouble(item.Split("-")[1]));
+                        else buf2 = (item, 1);
+                        buf1.Add(buf2);
+                    }
+                    AdjacencyList.Add(adjlist[i].Split(" : ")[0], buf1);
+                }
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("Граф записан неверно");
+            }
+        
     }
     public static Graph CompleteGraph(Graph graph)
     {
