@@ -49,7 +49,7 @@ class Graph
         string[] adjlist = { "" };
         while (true)
         {
-            if (!File.Exists(path)) adjlist = File.ReadAllLines(path);
+            if (File.Exists(path)) { adjlist = File.ReadAllLines(path); break; }
             else
             {
                 Console.WriteLine("Неверный путь файла");
@@ -61,11 +61,12 @@ class Graph
             {
                 wh = Convert.ToBoolean(adjlist[0].Split(":")[1]);
                 orn = Convert.ToBoolean(adjlist[1].Split(":")[1]);
-                for (int i = 2; i < adjlist.Length; i++)
+                for (int i = 2; i <= adjlist.Length; i++)
                 {
                     List<(string, double)> buf1 = new List<(string, double)>();
                     foreach (var item in adjlist[i].Split(" : ")[1].Split(" "))
                     {
+                    if (item == "") continue;
                         (string, double) buf2;
                         if (wh) buf2 = (item.Split("-")[0], Convert.ToDouble(item.Split("-")[1]));
                         else buf2 = (item, 1);
@@ -192,7 +193,7 @@ class Graph
         AdjacencyList[vertex1].Remove(AdjacencyList[vertex1].First(x => x.Item1 == vertex2));
         AdjacencyList[vertex2].Remove(AdjacencyList[vertex2].First(x => x.Item1 == vertex1));
     }
-    private void CreateAdjacencyList() { }
+    
     public double[][] CreateAdjacencyMatrix()
     {
         List<string> vertexList = AdjacencyList.Keys.ToList();
@@ -211,11 +212,7 @@ class Graph
 
         return matrix;
     }
-    public void PrintAdjacencyMatrix(double[][] matrix)
-    {
-        for (int i = 0; i < matrix.Length; i++)
-            Console.WriteLine(String.Join("  ", matrix[i]));
-    }
+   
     public void PrintAdjacencyList()
     {
         for (int i = 0; i < AdjacencyList.Count; i++)
@@ -239,11 +236,11 @@ class Graph
         res += "Orn:" + orn.ToString() + "\n";
         for (int i = 0; i < AdjacencyList.Count; i++)
         {
-            res += ($"{AdjacencyList.ElementAt(i).Key} :");
+            res += ($"{AdjacencyList.ElementAt(i).Key} : ");
             foreach (var item in AdjacencyList[AdjacencyList.ElementAt(i).Key])
             {
-                if (wh) res += " " + item.Item1 + "-" + item.Item2;
-                else res += " " + item.Item1;
+                if (wh) res +=  item.Item1 + "-" + item.Item2+" ";
+                else res += item.Item1+" ";
             }
             res += "\n";
         }
@@ -260,6 +257,66 @@ class Graph
         return check;
 
     }
+    internal void DeepSearch(string vertex, string from, Dictionary<string, int> visited, ref bool HasCycle)
+    {
+        visited[vertex] = 1;
+        foreach (var path in AdjacencyList[vertex])
+        {
+            if (path.Item1 == from)
+            {
+                continue;
+            }
+            else if (visited[path.Item1] == 0)
+            {
+                DeepSearch(path.Item1, vertex, visited, ref HasCycle);
+            }
+            else if (visited[path.Item1] == 1)
+            {
+                HasCycle = true;
+            }
+        }
+        visited[vertex] = 2;
+    }
+    internal int Strong()
+    {
+        int Connections = 0;
+        bool hasCycle = false;
+        Dictionary<string, int> visited = new();
+        foreach (var vert in AdjacencyList)
+        {
+            visited.Add(vert.Key, 0);
+        }
+        foreach (var vert in AdjacencyList.Keys)
+        {
+            if (visited[vert] == 0)
+            {
+                Connections++;
+                DeepSearch(vert, vert, visited, ref hasCycle);
+            }
+        }
+        return Connections;
+    }
+    internal bool Cycled()
+    {
+        bool IsCyclical = false;
+        Dictionary<string, int> visited = new();
+        foreach (var vert in AdjacencyList)
+        {
+            visited.Add(vert.Key, 0);
+        }
+        foreach (var vert in AdjacencyList.Keys)
+        {
+            if (visited[vert] == 0)
+            {
+                DeepSearch(vert, vert, visited, ref IsCyclical);
+            }
+        }
+        return IsCyclical;
+    }
+    internal bool Forest()
+    {
+        return (Strong() > 1 && !Cycled());
+    }
 }
 class UI
 {
@@ -275,7 +332,9 @@ class UI
             "4. Удалить ребро\n" +
             "5. Вывести список смежности\n" +
             "6. Сохранить список смежности в файл\n" +
-            "7. Выход");
+            "7. Вывести компоненты сильной связи\n" +
+            "8. Определение является ли граф деревом\n" +
+            "9. Выход");
             string id;
             List<string> idList = new();
 
@@ -316,11 +375,25 @@ class UI
                 case "5":
                     graph.PrintAdjacencyList();
                     break;
-                case "6"://граф в файл
+                case "6":
                     Console.WriteLine("введите путь до файла:");
                     graph.WriteAdjacencyListToFile(Console.ReadLine());
                     break;
                 case "7":
+                    Console.WriteLine(graph.Strong());
+                    break;
+                case "8":
+                    if (graph.Forest())
+                    {
+                        Console.WriteLine("Граф является лесом"); break;
+                    }
+                    if (!graph.Cycled())
+                    {
+                        Console.WriteLine("Граф является деревом"); break;
+                    }
+                    Console.WriteLine("Граф является ни деревом ни лесом"); break;
+                    break;
+                case "9":
                     return;
                 default:
                     Console.WriteLine("Выбрана несущесвующая операция");
