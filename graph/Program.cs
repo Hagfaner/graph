@@ -5,17 +5,13 @@ Console.WriteLine("1.Создать пустой граф\n" +
 switch (Console.ReadLine())
 {
     case "1":
-        Graph graph = new Graph(); UI ui = new UI(graph); break;
+        Graph graph = new Graph(); UI ui = new UI(graph); Graph.Kruskal(graph).PrintAdjacencyList(); break; 
     case "2":
         Console.WriteLine("Укажите путь к файлу:");
         graph = new Graph(Console.ReadLine()); UI ui1 = new UI(graph); break;
     default:
         break;
 }
-Graph graph2 = new Graph(Console.ReadLine());
-Graph graph3 = new Graph(Console.ReadLine());
-Graph graph4 = Graph.IntersectionGraph(graph2, graph3);
-graph4.PrintAdjacencyList();
 class Graph
 {
     internal Dictionary<string, List<(string, double)>> AdjacencyList = new();
@@ -317,6 +313,30 @@ class Graph
     {
         return (Strong() > 1 && !Cycled());
     }
+    public static Graph Kruskal(Graph graph) { 
+			Graph res = new Graph(new Dictionary<string, List<(string, double)>> { },true,false);
+			foreach (string vert in graph.AdjacencyList.Keys)
+			{
+				res.AddVertex(vert);
+			}
+			Dictionary<(string, string), double> dict = new();
+			foreach (var vertex in graph.AdjacencyList)
+			{
+				foreach (var adjVert in vertex.Value)
+				{
+					dict.Add((vertex.Key,adjVert.Item1),adjVert.Item2);
+				}
+			}
+            dict = dict.OrderBy(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
+			foreach (var Edge in dict) {
+				res.AddEdge(Edge.Key.Item1,Edge.Key.Item2,Edge.Value);
+				if (res.Cycled())
+				{
+					res.RemoveEdge(Edge.Key.Item1, Edge.Key.Item2);
+				}
+			}
+            return res;
+		}
 }
 class UI
 {
@@ -380,9 +400,18 @@ class UI
                     graph.WriteAdjacencyListToFile(Console.ReadLine());
                     break;
                 case "7":
-                    Console.WriteLine(graph.Strong());
-                    break;
+                    if (graph.orn == true)
+                    {
+                        Console.WriteLine($"Количество сильных связей: {graph.Strong()}");
+                        break;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Нельзя опредилть количество связей т.к граф неориентирвонный");
+                        break;
+                    }
                 case "8":
+                    if (graph.orn != true) { 
                     if (graph.Forest())
                     {
                         Console.WriteLine("Граф является лесом"); break;
@@ -392,6 +421,12 @@ class UI
                         Console.WriteLine("Граф является деревом"); break;
                     }
                     Console.WriteLine("Граф является ни деревом ни лесом"); break;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Невозможно определить т.к. граф ориентирован");
+                        break;
+                    }
                     break;
                 case "9":
                     return;
